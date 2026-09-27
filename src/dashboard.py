@@ -1,5 +1,6 @@
 import curses
 import time
+import random
 
 
 def dashboard(stdscr):
@@ -11,8 +12,20 @@ def dashboard(stdscr):
 
         # Mock order book data
         height, width = stdscr.getmaxyx()
-        bids = [150.20, 150.10, 150.00]
-        asks = [150.30, 150.40, 150.50]
+
+        base_price = 150.00 + random.uniform(-0.50, 0.50)
+
+        bids = [
+            base_price,
+            base_price - 0.10,
+            base_price - 0.20
+        ]
+
+        asks = [
+            base_price + 0.10,
+            base_price + 0.20,
+            base_price + 0.30
+        ]
 
         best_bid = bids[0]
         best_ask = asks[0]
