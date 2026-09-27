@@ -2,3 +2,12 @@
 __pycache__/
 *.pyc
 data/*.mmap
+
+# Cython/build artifacts
+build/
+*.pyd
+*.cpp
+*.lib
+*.exp
+
+orders.dat
