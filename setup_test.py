@@ -4,7 +4,7 @@ from Cython.Build import cythonize
 extensions = [
     Extension(
         "order_book",
-        ["Under Test/order_book.pyx"],
+        ["src/order_book.pyx"],
         language="c++",
     )
 ]
