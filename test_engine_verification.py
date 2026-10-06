@@ -1,4 +1,5 @@
 import sys
+import time
 
 sys.path.append("src")
 
@@ -38,6 +39,8 @@ print(f"Order ID: {sell_id}")
 print(f"Price: {sell_price}")
 print(f"Quantity: {sell_quantity}")
 
+start = time.perf_counter_ns()
+
 sell_fills = book.add_limit_order(
     sell_id,
     sell_price,
@@ -45,6 +48,12 @@ sell_fills = book.add_limit_order(
     1
 )
 
+end = time.perf_counter_ns()
+
+latency_ns = end - start
+
+print(f"SELL order processed in: {latency_ns} ns")
+print(f"SELL order processed in: {latency_ns / 1_000_000:.6f} ms")
 print("SELL fills:", sell_fills)
 
 
