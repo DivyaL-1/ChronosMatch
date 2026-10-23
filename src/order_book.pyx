@@ -19,65 +19,63 @@ cdef class OrderBook:
         self._next_seq += 1
         return self._next_seq
 
-    cdef vector[Fill] _match(self, COrder& taker) noexcept nogil:
-        cdef vector[Fill] fills
-        cdef Fill f
-        cdef PriceLevels* opposite
-        cdef PriceLevels.iterator it
-        cdef PriceLevel* level
-        cdef COrder* maker
-        cdef double level_price
-        cdef int64_t trade_qty
-        cdef bint tradable
+cdef vector[Fill] _match(self, COrder& taker) noexcept nogil:
+    cdef vector[Fill] fills
+    cdef Fill f
+    cdef PriceLevels* opposite
+    cdef PriceLevels.iterator it
+    cdef PriceLevel* level
+    cdef COrder* maker
+    cdef double level_price
+    cdef int64_t trade_qty
+
+    if taker.side == SIDE_BUY:
+        opposite = &self._asks
+    else:
+        opposite = &self._bids
+
+    while taker.quantity > 0:
+        it = opposite.begin()
+        if it == opposite.end():
+            break
+
+        level = &deref(it).second
 
         if taker.side == SIDE_BUY:
-            opposite = &self._asks
+            level_price = deref(it).first
+            if level_price > taker.price:
+                break
         else:
-            opposite = &self._bids
-
-        while taker.quantity > 0:
-            it = opposite.begin()
-            if it == opposite.end():
+            level_price = -deref(it).first
+            if level_price < taker.price:
                 break
 
-            level = &deref(it).second
+        while (not level.empty()) and taker.quantity > 0:
+            maker = &level.front()
 
-            if taker.side == SIDE_BUY:
-                level_price = deref(it).first       
-                tradable = level_price <= taker.price
+            if taker.quantity < maker.quantity:
+                trade_qty = taker.quantity
             else:
-                level_price = -deref(it).first        
-                tradable = level_price >= taker.price
+                trade_qty = maker.quantity
 
-            if not tradable:
-                break
+            f.maker_order_id = maker.order_id
+            f.taker_order_id = taker.order_id
+            f.price = level_price
+            f.quantity = trade_qty
+            f.aggressor_side = taker.side
+            fills.push_back(f)
 
-            while (not level.empty()) and taker.quantity > 0:
-                maker = &level.front()
-                if taker.quantity < maker.quantity:
-                    trade_qty = taker.quantity
-                else:
-                    trade_qty = maker.quantity
+            taker.quantity -= trade_qty
+            maker.quantity -= trade_qty
 
-                f.maker_order_id = maker.order_id
-                f.taker_order_id = taker.order_id
-                f.price = level_price                 
-                f.quantity = trade_qty
-                f.aggressor_side = taker.side
-                fills.push_back(f)
+            if maker.quantity == 0:
+                self._index.erase(maker.order_id)
+                level.pop_front()
 
-                taker.quantity -= trade_qty
-                maker.quantity -= trade_qty
+        if level.empty():
+            opposite.erase(it)
 
-                if maker.quantity == 0:
-                    self._index.erase(maker.order_id)
-                    level.pop_front()
-
-
-            if level.empty():
-                opposite.erase(it)
-
-        return fills
+    return fills
 
     cdef void _rest(self, COrder order) noexcept nogil:
         cdef OrderLocation loc
