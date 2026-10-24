@@ -1,72 +1,78 @@
 {
   "best_bid": [
-    165.83,
-    234
+    126.61,
+    405
   ],
   "best_ask": [
-    177.32,
-    364
+    147.77,
+    275
   ],
-  "spread": 11.48999999999998,
+  "spread": 21.16000000000001,
   "depth": [
     {
       "bids": [
         [
-          165.83,
-          234
+          126.61,
+          405
         ],
         [
-          162.78,
-          159
+          123.42,
+          508
         ],
         [
-          162.44,
-          393
+          123.41,
+          1187
         ],
         [
-          160.15,
-          317
+          123.39,
+          885
         ],
         [
-          155.57,
-          926
+          123.38,
+          235
         ]
       ],
       "asks": [
         [
-          177.32,
-          364
+          147.77,
+          275
         ],
         [
-          177.34,
-          2152
+          161.56,
+          307
         ],
         [
-          177.35,
-          1328
+          162.2,
+          509
         ],
         [
-          177.36,
-          995
+          163.06,
+          799
         ],
         [
-          177.37,
-          1258
+          168.0,
+          73
         ]
       ]
     }
   ],
   "orders_processed": 100000,
-  "orders_with_fills": 42824,
-  "total_fills": 78008,
-  "trades_buffered": 78008,
+  "orders_with_fills": 42632,
+  "total_fills": 77927,
+  "trades_buffered": 77927,
   "orders_lost": 0,
-  "elapsed_seconds": 30.655913,
-  "throughput_orders_per_sec": 3262.013432775595,
+  "elapsed_seconds": 30.0467003,
+  "throughput_orders_per_sec": 3328.152476030787,
   "latency_measurement": "book.add_limit_order call duration",
-  "average_latency_ns": 2360.539,
-  "p95_latency_ns": 4900,
-  "p99_latency_ns": 11500,
+  "average_latency_ns": 6576.595,
+  "p95_latency_ns": 19700,
+  "p99_latency_ns": 44100,
   "min_latency_ns": 600,
-  "max_latency_ns": 1507200
+  "max_latency_ns": 14418800,
+  "last_whale_event": {
+    "order_id": 99993,
+    "side": "SELL",
+    "levels_cleared": 4,
+    "timestamp": "20:50:43"
+  }
 }
