@@ -179,6 +179,34 @@ terminal.
     testing should be reported as complete only after their results have
     been verified.
 
+## Week 3 — Cython Optimization and Latency Benchmarking
+
+### Implementation
+- Corrected Cython OrderBook matching method indentation.
+- Successfully compiled and verified the Cython extension.
+- Verified nanosecond-level order processing latency measurements.
+- Completed three concurrent 100,000-order integration audits.
+
+### Benchmark Results
+
+| Metric | Run 1 | Run 2 | Run 3 |
+|---|---:|---:|---:|
+| Orders processed | 100,000 | 100,000 | 100,000 |
+| Orders lost | 0 | 0 | 0 |
+| Average latency | 757 ns | 1,250 ns | 1,188 ns |
+| P95 latency | 1,300 ns | 2,200 ns | 2,000 ns |
+| P99 latency | 2,400 ns | 5,100 ns | 4,500 ns |
+| End-to-end throughput (orders/sec) | 124,809 | 85,446 | 93,261 |
+| Audit result | PASS | PASS | PASS |
+
+### Summary
+- Total orders processed: 300,000 across three runs.
+- Reported order loss: 0.
+- Mean of reported average latencies: approximately 1,065 ns.
+- Mean end-to-end throughput: approximately 101,172 orders/sec.
+- Full 1,000,000-order integration audit remains pending.
+
+
 ## Known Limitations and Future Work
 
 -   Improve ring-buffer capacity and overflow/data-loss handling.
