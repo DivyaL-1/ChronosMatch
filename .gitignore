@@ -12,3 +12,15 @@ build/
 *.exp
 
 orders.dat
+
+# Week 4 - Trade buffer and SQLite ledger
+trades.dat
+trades.db
+trades.db-wal
+trades.db-shm
+
+# Overflow test files
+overflow_test.dat
+overflow_test.db
+overflow_test.db-wal
+overflow_test.db-shm
