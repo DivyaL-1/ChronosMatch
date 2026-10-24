@@ -1,72 +1,72 @@
 {
   "best_bid": [
-    142.21,
-    700
+    165.83,
+    234
   ],
   "best_ask": [
-    147.31,
-    33
+    177.32,
+    364
   ],
-  "spread": 5.099999999999994,
+  "spread": 11.48999999999998,
   "depth": [
     {
       "bids": [
         [
-          142.21,
-          700
+          165.83,
+          234
         ],
         [
-          141.98,
-          746
+          162.78,
+          159
         ],
         [
-          132.38,
-          637
+          162.44,
+          393
         ],
         [
-          131.75,
-          539
+          160.15,
+          317
         ],
         [
-          128.2,
-          922
+          155.57,
+          926
         ]
       ],
       "asks": [
         [
-          147.31,
-          33
+          177.32,
+          364
         ],
         [
-          147.52,
-          793
+          177.34,
+          2152
         ],
         [
-          151.74,
-          572
+          177.35,
+          1328
         ],
         [
-          153.25,
-          76
+          177.36,
+          995
         ],
         [
-          158.04,
-          809
+          177.37,
+          1258
         ]
       ]
     }
   ],
   "orders_processed": 100000,
-  "orders_with_fills": 42750,
-  "total_fills": 77936,
-  "trades_buffered": 77936,
+  "orders_with_fills": 42824,
+  "total_fills": 78008,
+  "trades_buffered": 78008,
   "orders_lost": 0,
-  "elapsed_seconds": 0.2597525,
-  "throughput_orders_per_sec": 384981.85772995447,
+  "elapsed_seconds": 30.655913,
+  "throughput_orders_per_sec": 3262.013432775595,
   "latency_measurement": "book.add_limit_order call duration",
-  "average_latency_ns": 912.086,
-  "p95_latency_ns": 2000,
-  "p99_latency_ns": 3600,
-  "min_latency_ns": 200,
-  "max_latency_ns": 1437100
+  "average_latency_ns": 2360.539,
+  "p95_latency_ns": 4900,
+  "p99_latency_ns": 11500,
+  "min_latency_ns": 600,
+  "max_latency_ns": 1507200
 }

@@ -1,4 +1,4 @@
-
+import os
 import sys
 import json
 import time
@@ -14,6 +14,7 @@ from trade_buffer import TradeBuffer, Trade
 import order_book
 
 EXPECTED_ORDERS = 100_000
+SNAPSHOT_INTERVAL = 1000
 
 
 def percentile(values, percent):
@@ -25,6 +26,30 @@ def percentile(values, percent):
     index = math.ceil((percent / 100) * len(ordered)) - 1
     return ordered[max(0, index)]
 
+
+def write_snapshot(
+    book,
+    orders_processed,
+    orders_with_fills,
+    total_fills
+):
+    """Write the current order-book state for the dashboard."""
+    snapshot = {
+        "best_bid": book.best_bid(),
+        "best_ask": book.best_ask(),
+        "spread": book.spread(),
+        "depth": book.depth(5),
+        "orders_processed": orders_processed,
+        "orders_with_fills": orders_with_fills,
+        "total_fills": total_fills
+    }
+
+    # Write to a temporary file first, then replace the snapshot.
+    # This prevents the dashboard from reading a partially written JSON file.
+    snapshot_path = ROOT / "book_snapshot.json"
+
+    with open(snapshot_path, "w", encoding="utf-8") as f:
+        json.dump(snapshot, f)
 
 def main():
     ring = RingBuffer("orders.dat", create=False)
@@ -46,9 +71,7 @@ def main():
         total_lost = 0
         trades_buffered = 0
 
-        # Store order-processing durations in nanoseconds.
         latencies_ns = []
-
         start_ns = time.perf_counter_ns()
 
         print("Starting ChronosMatch engine audit...")
@@ -69,9 +92,7 @@ def main():
                     )
 
                     exit_ns = time.perf_counter_ns()
-
-                    latency_ns = exit_ns - entry_ns
-                    latencies_ns.append(latency_ns)
+                    latencies_ns.append(exit_ns - entry_ns)
 
                     orders_processed += 1
 
@@ -93,6 +114,15 @@ def main():
 
                             trade_buffer.push(trade)
                             trades_buffered += 1
+
+                    # Publish progress periodically while processing.
+                    if orders_processed % SNAPSHOT_INTERVAL == 0:
+                        write_snapshot(
+                            book,
+                            orders_processed,
+                            orders_with_fills,
+                            total_fills
+                        )
 
                 current_seq = current
 
@@ -131,11 +161,10 @@ def main():
             "max_latency_ns": max(latencies_ns) if latencies_ns else 0
         }
 
-        with open(
-            ROOT / "book_snapshot.json",
-            "w",
-            encoding="utf-8"
-        ) as f:
+        # Publish the final snapshot with all audit statistics.
+        snapshot_path = ROOT / "book_snapshot.json"
+
+        with open(snapshot_path, "w", encoding="utf-8") as f:
             json.dump(snapshot, f, indent=2)
 
         print("\n--- ChronosMatch Engine Audit ---")
