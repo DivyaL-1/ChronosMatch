@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from ringBuffer import RingBuffer
+from trade_buffer import TradeBuffer, Trade
 import order_book
 
 EXPECTED_ORDERS = 100_000
@@ -27,29 +28,37 @@ def percentile(values, percent):
 
 def main():
     ring = RingBuffer("orders.dat", create=False)
-    book = order_book.OrderBook("TEST")
-
-    current_seq = 0
-    orders_processed = 0
-    orders_with_fills = 0
-    total_fills = 0
-    total_lost = 0
-
-    # Store each order-processing duration in nanoseconds.
-    latencies_ns = []
-
-    start_ns = time.perf_counter_ns()
-
-    print("Starting ChronosMatch engine audit...")
+    trade_buffer = None
 
     try:
+        book = order_book.OrderBook("TEST")
+
+        trade_buffer = TradeBuffer(
+            str(ROOT / "trades.dat"),
+            capacity=100_000,
+            create=True
+        )
+
+        current_seq = 0
+        orders_processed = 0
+        orders_with_fills = 0
+        total_fills = 0
+        total_lost = 0
+        trades_buffered = 0
+
+        # Store order-processing durations in nanoseconds.
+        latencies_ns = []
+
+        start_ns = time.perf_counter_ns()
+
+        print("Starting ChronosMatch engine audit...")
+
         while orders_processed < EXPECTED_ORDERS:
             records, current, lost = ring.read_new(current_seq)
             total_lost += lost
 
             if records:
                 for seq, order in records:
-                    # Start timing immediately before entering the engine.
                     entry_ns = time.perf_counter_ns()
 
                     fills = book.add_limit_order(
@@ -59,7 +68,6 @@ def main():
                         order.side
                     )
 
-                    # Stop timing immediately after the engine call returns.
                     exit_ns = time.perf_counter_ns()
 
                     latency_ns = exit_ns - entry_ns
@@ -70,6 +78,21 @@ def main():
                     if fills:
                         orders_with_fills += 1
                         total_fills += len(fills)
+
+                        for fill in fills:
+                            trade = Trade(
+                                maker_order_id=fill["maker_order_id"],
+                                taker_order_id=fill["taker_order_id"],
+                                price=fill["price"],
+                                quantity=fill["quantity"],
+                                aggressor_side=(
+                                    0 if fill["aggressor_side"] == "BUY"
+                                    else 1
+                                )
+                            )
+
+                            trade_buffer.push(trade)
+                            trades_buffered += 1
 
                 current_seq = current
 
@@ -93,6 +116,7 @@ def main():
             "orders_processed": orders_processed,
             "orders_with_fills": orders_with_fills,
             "total_fills": total_fills,
+            "trades_buffered": trades_buffered,
             "orders_lost": total_lost,
             "elapsed_seconds": elapsed_seconds,
             "throughput_orders_per_sec": (
@@ -107,7 +131,11 @@ def main():
             "max_latency_ns": max(latencies_ns) if latencies_ns else 0
         }
 
-        with open(ROOT / "book_snapshot.json", "w", encoding="utf-8") as f:
+        with open(
+            ROOT / "book_snapshot.json",
+            "w",
+            encoding="utf-8"
+        ) as f:
             json.dump(snapshot, f, indent=2)
 
         print("\n--- ChronosMatch Engine Audit ---")
@@ -116,6 +144,7 @@ def main():
         print(f"Orders lost:           {total_lost:,}")
         print(f"Orders with fills:     {orders_with_fills:,}")
         print(f"Total fills:           {total_fills:,}")
+        print(f"Trades buffered:       {trades_buffered:,}")
         print(f"Elapsed seconds:       {elapsed_seconds:.4f}")
         print(
             f"Throughput:            "
@@ -135,9 +164,18 @@ def main():
             print("AUDIT FAILED: order count mismatch or records lost.")
             sys.exit(1)
 
+        if trades_buffered != total_fills:
+            print("AUDIT FAILED: trade buffer count mismatch.")
+            sys.exit(1)
+
         print("AUDIT PASSED: all expected orders were processed.")
+        print("All reported fills were written to the trade buffer.")
 
     finally:
+        if trade_buffer is not None:
+            trade_buffer.flush()
+            trade_buffer.close()
+
         ring.close()
 
 
