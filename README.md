@@ -1,230 +1,82 @@
-# ChronosMatch
+ChronosMatch — Low-Latency Order Matching Engine
 
-ChronosMatch is a low-latency trading-engine prototype that simulates
-market-order generation, transfers order records through a memory-mapped
-ring buffer, processes them with a Cython-based OrderBook, and displays
-market statistics in a terminal dashboard.
+ChronosMatch is a low-latency order matching engine prototype built to explore high-performance order processing, inter-process communication (IPC), memory-mapped shared memory, and optimized order matching using Python and Cython.
 
-> **Project status:** The main components have been implemented and
-> basic matching has been tested. Large-scale IPC validation and
-> reliable end-to-end performance benchmarking remain future work.
+The project combines an asynchronous market order generator, a memory-mapped ring buffer, a Cython-based order book, performance measurements, and a real-time dashboard.
 
-## Architecture
+Project Overview
 
-``` text
-Market Firehose
-      |
-      v
-Memory-Mapped Ring Buffer (mmap + struct)
-      |
-      v
-Ring-to-OrderBook Processor
-      |
-      v
-Cython OrderBook
-      |
-      v
-JSON Snapshot
-      |
-      v
-Curses Terminal Dashboard
-```
+ChronosMatch simulates a simplified financial market in which generated buy and sell orders are transferred between processes, processed by an order book, and matched according to price-time priority.
 
-## Main Components
+The project focuses on:
 
--   **Market Firehose** (`src/firehose_to_ring.py`): generates simulated
-    BUY and SELL orders and writes them to the ring buffer.
--   **Order Generator** (`src/order_generator.py`): creates mock order
-    data.
--   **Ring Buffer** (`src/ringBuffer.py`): stores fixed-layout binary
-    records in a memory-mapped file.
--   **OrderBook** (`src/order_book.pyx`, `src/order_book.pxd`):
-    Cython-based order matching implementation.
--   **Processor** (`src/ring_to_orderbook.py`): reads buffered orders,
-    sends them to the OrderBook, and writes market statistics to
-    `book_snapshot.json`.
--   **Dashboard** (`src/dashboard.py`): displays the latest snapshot in
-    the terminal.
--   **Verification Test** (`test_engine_verification.py`): checks a
-    simple BUY/SELL matching scenario.
+Efficient order generation and processing
 
-## Technology Stack
+Inter-process communication using memory-mapped shared memory
 
--   Python
--   asyncio
--   `mmap` and `struct`
--   Cython
--   JSON
--   curses (`windows-curses` on Windows)
+Order-book matching and trade generation
 
-## Setup
+Latency and throughput measurement
 
-Run the following commands from the project root in PowerShell.
+IPC performance comparison
 
-### 1. Create and activate a virtual environment
+Market visualization through a dashboard
 
-``` powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
+Architecture
 
-### 2. Install dependencies
+        Async Market Firehose
+                 |
+                 v
+       Generated Market Orders
+                 |
+                 v
+       Memory-Mapped Ring Buffer
+                 |
+                 v
+        Order Book Consumer
+                 |
+                 v
+       Cython Matching Engine
+                 |
+          Price-Time Priority
+                 |
+                 v
+          Trade Generation
+                 |
+        +--------+--------+
+        |                 |
+        v                 v
+  Trade Buffer       SQLite Writer
+        |                 |
+        +--------+--------+
+                 |
+                 v
+      Market Dashboard / Metrics
 
-Install the dependencies listed in your project's requirements file if
-one is available. The build also requires Cython and setuptools. For
-example:
+The exact data path depends on the script being executed. The separate IPC proof benchmark compares mmap and pickle-based IPC and does not run the Cython matching engine.
 
-``` powershell
-python -m pip install --upgrade pip setuptools Cython
-python -m pip install windows-curses
-```
+Technology Stack
 
-Install any other packages imported by the project that are not already
-available in the environment.
+Technology                                      Purpose
 
-### 3. Build the Cython extension
+Python 3.12                                     Main implementation and orchestration
 
-``` powershell
-python setup_test.py build_ext --inplace
-```
+asyncio                                         Asynchronous market order generation
 
-A successful build should create a compiled `order_book` extension in
-the project root. The exact filename depends on your Python version and
-platform.
+Cython                                          Optimized order-book processing
 
-## Running the Pipeline
+NumPy                                           Numerical and array operations where applicable
 
-Open separate PowerShell terminals for the producer, processor, and
-dashboard. Activate the same virtual environment in each terminal.
+mmap                                            Shared memory and IPC
 
-### 1. Start the processor
+struct                                          Binary order representation
 
-``` powershell
-python src\ring_to_orderbook.py
-```
+Flask                                           Browser-based dashboard
 
-### 2. Generate and write orders
+HTML and CSS                                    Dashboard layout and styling
 
-In another terminal:
+SQLite                                          Trade persistence support
 
-``` powershell
-python src\firehose_to_ring.py
-```
+PowerShell                                      Windows development and execution
 
-The firehose script currently generates 100,000 simulated orders. The
-ring buffer in this setup has a capacity of 1,000 records, so if the
-producer writes all orders before the consumer reads them, older records
-can be overwritten. The number of records actually processed depends on
-producer/consumer timing and the ring-buffer implementation.
-
-### 3. Start the dashboard
-
-In a third terminal:
-
-``` powershell
-python src\dashboard.py
-```
-
-The dashboard reads `book_snapshot.json`. Keep the terminal window large
-enough for the dashboard layout. Use the dashboard's displayed quit key
-to exit.
-
-> **Important:** Do not run a process that recreates or truncates
-> `orders.dat` while another process is using it. Stop the producer and
-> consumer before restarting the pipeline if you encounter file or
-> memory-mapping errors.
-
-## Run the Matching Verification
-
-After building the Cython extension, run:
-
-``` powershell
-python test_engine_verification.py
-```
-
-The verification test inserts a BUY order at 150.00 for 100 units,
-followed by a compatible SELL order at 149.00 for 100 units. The
-expected result is a fill for 100 units at the resting BUY order's
-price, 150.00, and a PASS message.
-
-## Output
-
-The processor writes a `book_snapshot.json` file containing market
-statistics such as:
-
--   Best bid
--   Best ask
--   Spread
--   Bid and ask depth
--   Orders processed
--   Orders with fills
--   Total fills
-
-The dashboard reads this snapshot and presents the values in the
-terminal.
-
-## Performance Notes
-
--   A previously recorded generation-only benchmark was approximately
-    **412,000 generated orders per second**. This is not end-to-end
-    system throughput.
--   A single matching-call timing was recorded at **13,800 nanoseconds
-    (0.0138 ms)**. This is one measurement, not a statistically reliable
-    latency benchmark.
--   A run that writes 100,000 orders to a 1,000-slot ring buffer without
-    concurrent consumption can overwrite 99,000 earlier records. This
-    demonstrates a capacity/consumer-rate limitation, not successful
-    processing of all 100,000 orders.
--   The one-million-order IPC audit and comprehensive end-to-end latency
-    testing should be reported as complete only after their results have
-    been verified.
-
-## Week 3 — Cython Optimization and Latency Benchmarking
-
-### Implementation
-- Corrected Cython OrderBook matching method indentation.
-- Successfully compiled and verified the Cython extension.
-- Verified nanosecond-level order processing latency measurements.
-- Completed three concurrent 100,000-order integration audits.
-
-### Benchmark Results
-
-| Metric | Run 1 | Run 2 | Run 3 |
-|---|---:|---:|---:|
-| Orders processed | 100,000 | 100,000 | 100,000 |
-| Orders lost | 0 | 0 | 0 |
-| Average latency | 757 ns | 1,250 ns | 1,188 ns |
-| P95 latency | 1,300 ns | 2,200 ns | 2,000 ns |
-| P99 latency | 2,400 ns | 5,100 ns | 4,500 ns |
-| End-to-end throughput (orders/sec) | 124,809 | 85,446 | 93,261 |
-| Audit result | PASS | PASS | PASS |
-
-### Summary
-- Total orders processed: 300,000 across three runs.
-- Reported order loss: 0.
-- Mean of reported average latencies: approximately 1,065 ns.
-- Mean end-to-end throughput: approximately 101,172 orders/sec.
-- Full 1,000,000-order integration audit remains pending.
-
-
-## Known Limitations and Future Work
-
--   Improve ring-buffer capacity and overflow/data-loss handling.
--   Perform the planned one-million-order IPC audit.
--   Collect repeated latency measurements, including median and tail
-    latency.
--   Benchmark end-to-end throughput rather than order generation alone.
--   Add persistent trade logging, for example with SQLite or ClickHouse.
--   Add highlighting for large or unusual orders to the dashboard.
-
-## Repository Notes
-
-Generated files such as `orders.dat`, `book_snapshot.json`, compiled
-extensions (`.pyd`), and build outputs may be runtime artifacts. Check
-`.gitignore` before committing them.
-
-## Disclaimer
-
-ChronosMatch is a project prototype for learning and evaluation. It is
-not a production trading system and has not been validated for
-real-money trading.
+Git and GitHub                                  Version control and collaboration
