@@ -80,3 +80,64 @@ SQLite                                          Trade persistence support
 PowerShell                                      Windows development and execution
 
 Git and GitHub                                  Version control and collaboration
+
+
+
+Main Components
+
+1. Market Firehose
+
+The market firehose generates synthetic market orders asynchronously.
+
+Each order includes fields such as:
+
+order_id — unique order identifier
+
+price — order price
+
+quantity — number of units
+
+side — BUY or SELL
+
+The generator can be benchmarked independently to measure order-generation performance.
+
+2. Memory-Mapped Ring Buffer
+
+The ring buffer transfers order data between processes through a memory-mapped file.
+
+Its purpose is to reduce the overhead associated with repeatedly serializing and transferring Python objects between processes.
+
+The implementation uses binary records and shared-memory access to support high-volume order delivery.
+
+3. Cython Order Book
+
+The order book processes incoming orders and matches compatible buy and sell orders.
+
+The matching engine is implemented in Cython to reduce Python-level overhead in performance-sensitive operations.
+
+The project explores price-time priority, where better-priced orders take precedence and orders at the same price are handled according to arrival order.
+
+4. Trade Buffer and SQLite
+
+The trade buffer provides storage for generated trade records. The project also includes SQLite-based trade-writing support.
+
+Trade buffering and successful persistence to SQLite are separate concerns; the database record count should be verified independently when validating persistence.
+
+5. Dashboard
+
+The browser-based dashboard presents market information and engine metrics, including:
+
+Bid and ask market depth
+
+Best bid and best ask
+
+Bid-ask spread
+
+Order-book information
+
+Latency and throughput metrics where supplied by the running engine
+
+Market status and alert indicators
+
+The dashboard is intended to make the matching engine's activity easier to inspect during demonstrations.
+
