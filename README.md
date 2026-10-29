@@ -134,3 +134,144 @@ Market status and alert indicators
 
 The dashboard is intended to make the matching engine's activity easier to inspect during demonstrations.
 
+## Repository Structure
+
+```text
+ChronosMatch/
+├── src/
+│   ├── dashboard.py
+│   ├── firehose_to_ring.py
+│   ├── firehose_to_ring_concurrent.py
+│   ├── order_book.pyx
+│   ├── order_book.cpp
+│   ├── order_book.cp312-win_amd64.pyd
+│   ├── order_generator.py
+│   ├── ring_to_orderbook.py
+│   ├── ringBuffer.py
+│   ├── run_engine_audit.py
+│   ├── run_live_demo.py
+│   ├── test_ring_reader.py
+│   ├── trade_buffer.py
+│   └── trade_writer.py
+├── test/
+│   ├── cpu_timing.py
+│   ├── gen.py
+│   ├── ipc_address.py
+│   ├── mmap_consumer.py
+│   ├── mmap_producer.py
+│   ├── pickle_consumer.py
+│   ├── pickle_producer.py
+│   ├── ringBuffer.py
+│   ├── run_proof.py
+│   ├── verify_integrity.py
+│   └── proof_results.json
+├── static/
+|    |___ style1.css
+├── templates/
+|    |___ dashboard.html
+├── app.py
+├── app1.py
+├── setup_test.py
+├── test_engine_verification.py
+├── test_order_book.py
+├── book_snapshot.json
+├── orders.dat
+├── trades.dat
+├── trades.db
+├── .gitignore
+└── README.md
+```
+
+Installation and Setup
+
+Prerequisites
+
+Windows 10 or Windows 11
+
+Python 3.12
+
+Git
+
+Visual Studio Build Tools with the Desktop development with C++ workload for compiling Cython extensions
+
+1. Clone the repository
+
+git clone https://github.com/DivyaL-1/ChronosMatch.git
+cd ChronosMatch
+
+If the repository is already cloned, open its folder instead of cloning it again.
+
+2. Create a virtual environment
+
+python -m venv .venv
+
+Activate it in PowerShell:
+
+.\.venv\Scripts\Activate.ps1
+
+3. Install dependencies
+
+If the repository contains requirements.txt, run:
+
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+
+Install any additional project-specific dependencies listed in the relevant scripts or build configuration.
+
+4. Compile the Cython extension
+
+The Cython extension must be built before running scripts that import the compiled order-book module.
+
+Use the project's existing build configuration, such as setup.py or pyproject.toml, if available. For a compatible setup.py configuration, the command is typically:
+
+python setup.py build_ext --inplace
+
+Run the build from the directory containing the build configuration. If your repository uses a different build system, follow that configuration instead.
+
+Running the Project
+
+Run commands from the repository root unless otherwise indicated.
+
+Run the browser dashboard
+
+python app.py
+
+Open the local URL printed by Flask in your browser. The default Flask address is commonly http://127.0.0.1:5000, unless the application is configured differently.
+
+Run the order generator
+
+python src/order_generator.py
+
+This runs the generator's configured default workload. Check the script if you need to change the order count or benchmark settings.
+
+Run the producer and ring-buffer workflow
+
+python src/firehose_to_ring.py
+
+This script uses the configuration defined in the source file. Ensure the consumer is started as required by the particular workflow before running a producer-only script.
+
+Run the matching-engine audit
+
+python src/run_engine_audit.py
+
+This runs the audit with the count and configuration currently defined in the script.
+
+Run the live demonstration
+
+python src/run_live_demo.py
+
+Use the workflow's expected startup order and configuration so the producer and consumer coordinate correctly.
+
+Run the one-million-order IPC proof test
+
+python test/run_proof.py
+
+The default test sends 1,000,000 orders through each of two IPC implementations:
+
+Memory-mapped shared memory (mmap)
+
+Pickle-based IPC using multiprocessing.connection
+
+The test compares elapsed wall-clock time, combined CPU time, throughput, and reported lost orders. It writes its results to test/proof_results.json.
+
+The IPC proof test is separate from the Cython matching-engine audit.
