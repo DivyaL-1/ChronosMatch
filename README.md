@@ -57,53 +57,24 @@ The exact data path depends on the script being executed. The separate IPC proof
 
 Technology Stack
 
-Technology
+## Technology Stack
 
-Purpose
+| Technology | Purpose |
+|---|---|
+| Python 3.12 | Core programming language |
+| asyncio | Asynchronous order generation |
+| Cython | Optimized order-book processing |
+| NumPy | Numerical and array operations, where applicable |
+| mmap | Memory-mapped shared memory for IPC |
+| struct | Binary order data representation |
+| Flask | Web-based dashboard |
+| HTML | Dashboard structure |
+| CSS | Dashboard styling |
+| SQLite | Trade storage and persistence |
+| Git | Version control |
+| GitHub | Source code hosting and collaboration |
+| PowerShell | Windows development and execution |
 
-Python 3.12
-
-Main implementation and orchestration
-
-asyncio
-
-Asynchronous market order generation
-
-Cython
-
-Optimized order-book processing
-
-NumPy
-
-Numerical and array operations where applicable
-
-mmap
-
-Shared memory and IPC
-
-struct
-
-Binary order representation
-
-Flask
-
-Browser-based dashboard
-
-HTML and CSS
-
-Dashboard layout and styling
-
-SQLite
-
-Trade persistence support
-
-PowerShell
-
-Windows development and execution
-
-Git and GitHub
-
-Version control and collaboration
 
 Main Components
 
