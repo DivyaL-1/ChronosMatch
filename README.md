@@ -1,14 +1,14 @@
-ChronosMatch — Low-Latency Order Matching Engine
+##ChronosMatch — Low-Latency Order Matching Engine
 
 ChronosMatch is a low-latency order matching engine prototype built to explore high-performance order processing, inter-process communication (IPC), memory-mapped shared memory, and optimized order matching using Python and Cython.
 
 The project combines an asynchronous market order generator, a memory-mapped ring buffer, a Cython-based order book, performance measurements, and a real-time dashboard.
 
-Project Overview
+##Project Overview
 
 ChronosMatch simulates a simplified financial market in which generated buy and sell orders are transferred between processes, processed by an order book, and matched according to price-time priority.
 
-The project focuses on:
+#The project focuses on:
 
 Efficient order generation and processing
 
@@ -22,40 +22,44 @@ IPC performance comparison
 
 Market visualization through a dashboard
 
-Architecture
 
-        Async Market Firehose
-                 |
-                 v
-       Generated Market Orders
-                 |
-                 v
-       Memory-Mapped Ring Buffer
-                 |
-                 v
-        Order Book Consumer
-                 |
-                 v
-       Cython Matching Engine
-                 |
-          Price-Time Priority
-                 |
-                 v
-          Trade Generation
-                 |
-        +--------+--------+
-        |                 |
-        v                 v
-  Trade Buffer       SQLite Writer
-        |                 |
-        +--------+--------+
-                 |
-                 v
-      Market Dashboard / Metrics
+## Architecture
+
+```text
+Async Market Firehose
+          |
+          v
+Generated Market Orders
+          |
+          v
+Memory-Mapped Ring Buffer
+          |
+          v
+Order Book Consumer
+          |
+          v
+Cython Matching Engine
+          |
+          v
+Price-Time Priority
+          |
+          v
+Trade Generation
+          |
+          +-------------------+
+          |                   |
+          v                   v
+     Trade Buffer        SQLite Writer
+          |                   |
+          +---------+---------+
+                    |
+                    v
+          Market Dashboard / Metrics
+```
+
 
 The exact data path depends on the script being executed. The separate IPC proof benchmark compares mmap and pickle-based IPC and does not run the Cython matching engine.
 
-Technology Stack
 
 ## Technology Stack
 
@@ -76,9 +80,9 @@ Technology Stack
 | PowerShell | Windows development and execution |
 
 
-Main Components
+##Main Components
 
-1. Market Firehose
+#1. Market Firehose
 
 The market firehose generates synthetic market orders asynchronously.
 
@@ -94,7 +98,7 @@ side — BUY or SELL
 
 The generator can be benchmarked independently to measure order-generation performance.
 
-2. Memory-Mapped Ring Buffer
+#2. Memory-Mapped Ring Buffer
 
 The ring buffer transfers order data between processes through a memory-mapped file.
 
@@ -102,7 +106,7 @@ Its purpose is to reduce the overhead associated with repeatedly serializing and
 
 The implementation uses binary records and shared-memory access to support high-volume order delivery.
 
-3. Cython Order Book
+#3. Cython Order Book
 
 The order book processes incoming orders and matches compatible buy and sell orders.
 
@@ -110,13 +114,13 @@ The matching engine is implemented in Cython to reduce Python-level overhead in 
 
 The project explores price-time priority, where better-priced orders take precedence and orders at the same price are handled according to arrival order.
 
-4. Trade Buffer and SQLite
+#4. Trade Buffer and SQLite
 
 The trade buffer provides storage for generated trade records. The project also includes SQLite-based trade-writing support.
 
 Trade buffering and successful persistence to SQLite are separate concerns; the database record count should be verified independently when validating persistence.
 
-5. Dashboard
+#5. Dashboard
 
 The browser-based dashboard presents market information and engine metrics, including:
 
@@ -169,7 +173,6 @@ ChronosMatch/
 |    |___ style1.css
 ├── templates/
 |    |___ dashboard.html
-├── app.py
 ├── app1.py
 ├── setup_test.py
 ├── test_engine_verification.py
@@ -182,9 +185,9 @@ ChronosMatch/
 └── README.md
 ```
 
-Installation and Setup
+##Installation and Setup
 
-Prerequisites
+##Prerequisites
 
 Windows 10 or Windows 11
 
@@ -194,14 +197,14 @@ Git
 
 Visual Studio Build Tools with the Desktop development with C++ workload for compiling Cython extensions
 
-1. Clone the repository
+#1. Clone the repository
 
 git clone https://github.com/DivyaL-1/ChronosMatch.git
 cd ChronosMatch
 
 If the repository is already cloned, open its folder instead of cloning it again.
 
-2. Create a virtual environment
+#2. Create a virtual environment
 
 python -m venv .venv
 
@@ -209,7 +212,7 @@ Activate it in PowerShell:
 
 .\.venv\Scripts\Activate.ps1
 
-3. Install dependencies
+#3. Install dependencies
 
 If the repository contains requirements.txt, run:
 
@@ -218,7 +221,7 @@ pip install -r requirements.txt
 
 Install any additional project-specific dependencies listed in the relevant scripts or build configuration.
 
-4. Compile the Cython extension
+#4. Compile the Cython extension
 
 The Cython extension must be built before running scripts that import the compiled order-book module.
 
@@ -228,41 +231,41 @@ python setup.py build_ext --inplace
 
 Run the build from the directory containing the build configuration. If your repository uses a different build system, follow that configuration instead.
 
-Running the Project
+##Running the Project
 
 Run commands from the repository root unless otherwise indicated.
 
-Run the browser dashboard
+#Run the browser dashboard
 
 python app.py
 
 Open the local URL printed by Flask in your browser. The default Flask address is commonly http://127.0.0.1:5000, unless the application is configured differently.
 
-Run the order generator
+#Run the order generator
 
 python src/order_generator.py
 
 This runs the generator's configured default workload. Check the script if you need to change the order count or benchmark settings.
 
-Run the producer and ring-buffer workflow
+#Run the producer and ring-buffer workflow
 
 python src/firehose_to_ring.py
 
 This script uses the configuration defined in the source file. Ensure the consumer is started as required by the particular workflow before running a producer-only script.
 
-Run the matching-engine audit
+#Run the matching-engine audit
 
 python src/run_engine_audit.py
 
 This runs the audit with the count and configuration currently defined in the script.
 
-Run the live demonstration
+#Run the live demonstration
 
 python src/run_live_demo.py
 
 Use the workflow's expected startup order and configuration so the producer and consumer coordinate correctly.
 
-Run the one-million-order IPC proof test
+#Run the one-million-order IPC proof test
 
 python test/run_proof.py
 
