@@ -1,72 +1,66 @@
-##ChronosMatch — Low-Latency Order Matching Engine
+# ChronosMatch – Low-Latency Order Matching Engine
 
-ChronosMatch is a low-latency order matching engine prototype built to explore high-performance order processing, inter-process communication (IPC), memory-mapped shared memory, and optimized order matching using Python and Cython.
+ChronosMatch is a low-latency order matching engine prototype developed to explore high-performance order processing, inter-process communication (IPC), memory-mapped shared memory, and optimized order matching using Python and Cython.
 
-The project combines an asynchronous market order generator, a memory-mapped ring buffer, a Cython-based order book, performance measurements, and a real-time dashboard.
+The project combines an asynchronous market order generator, a memory-mapped ring buffer, a Cython-based order book, trade generation, performance benchmarking, and a web-based market dashboard.
 
-##Project Overview
+## Project Overview
 
 ChronosMatch simulates a simplified financial market in which generated buy and sell orders are transferred between processes, processed by an order book, and matched according to price-time priority.
 
-#The project focuses on:
+The main objectives are:
 
-Efficient order generation and processing
-
-Inter-process communication using memory-mapped shared memory
-
-Order-book matching and trade generation
-
-Latency and throughput measurement
-
-IPC performance comparison
-
-Market visualization through a dashboard
-
+- Generate synthetic market orders asynchronously.
+- Transfer orders efficiently between processes.
+- Implement a memory-mapped ring buffer for IPC.
+- Process and match orders using a Cython-based order book.
+- Generate and buffer trades.
+- Measure processing latency and throughput.
+- Compare mmap-based IPC with pickle-based IPC.
+- Visualize market activity through a dashboard.
 
 ## Architecture
 
 ```text
-Async Market Firehose
-          |
-          v
-Generated Market Orders
-          |
-          v
-Memory-Mapped Ring Buffer
-          |
-          v
-Order Book Consumer
-          |
-          v
-Cython Matching Engine
-          |
-          v
-Price-Time Priority
-          |
-          v
-Trade Generation
-          |
-          +-------------------+
-          |                   |
-          v                   v
-     Trade Buffer        SQLite Writer
-          |                   |
-          +---------+---------+
-                    |
-                    v
-          Market Dashboard / Metrics
+              Async Market Firehose
+                       |
+                       v
+              Generated Market Orders
+                       |
+                       v
+              Memory-Mapped Ring Buffer
+                       |
+                       v
+                Order Book Consumer
+                       |
+                       v
+               Cython Matching Engine
+                       |
+                       v
+                 Price-Time Priority
+                       |
+                       v
+                  Trade Generation
+                       |
+             +---------+---------+
+             |                   |
+             v                   v
+        Trade Buffer        SQLite Writer
+             |                   |
+             +---------+---------+
+                       |
+                       v
+             Market Dashboard / Metrics
 ```
 
-
-The exact data path depends on the script being executed. The separate IPC proof benchmark compares mmap and pickle-based IPC and does not run the Cython matching engine.
-
+The main matching-engine workflow processes orders through the ring buffer and order book. The separate IPC proof test compares mmap and pickle-based communication using independent producer and consumer processes.
 
 ## Technology Stack
 
 | Technology | Purpose |
 |---|---|
 | Python 3.12 | Core programming language |
-| asyncio | Asynchronous order generation |
+| asyncio | Asynchronous market order generation |
 | Cython | Optimized order-book processing |
 | NumPy | Numerical and array operations, where applicable |
 | mmap | Memory-mapped shared memory for IPC |
@@ -79,76 +73,84 @@ The exact data path depends on the script being executed. The separate IPC proof
 | GitHub | Source code hosting and collaboration |
 | PowerShell | Windows development and execution |
 
+## Main Components
 
-##Main Components
-
-#1. Market Firehose
+### 1. Async Market Firehose
 
 The market firehose generates synthetic market orders asynchronously.
 
-Each order includes fields such as:
+Each generated order contains:
 
-order_id — unique order identifier
+- `order_id` – Unique order identifier.
+- `price` – Price of the order.
+- `quantity` – Number of units.
+- `side` – Order direction (`BUY` or `SELL`).
 
-price — order price
+The generator supports configurable order counts and can be benchmarked independently to measure generation performance.
 
-quantity — number of units
+### 2. Memory-Mapped Ring Buffer
 
-side — BUY or SELL
+The ring buffer transfers order data between separate processes using memory-mapped files.
 
-The generator can be benchmarked independently to measure order-generation performance.
+It uses binary data representation to reduce the overhead associated with transferring serialized Python objects.
 
-#2. Memory-Mapped Ring Buffer
+Key concepts include:
 
-The ring buffer transfers order data between processes through a memory-mapped file.
+- Shared-memory communication.
+- Memory-mapped file access.
+- Binary record storage.
+- Producer-consumer coordination.
+- High-volume order delivery.
 
-Its purpose is to reduce the overhead associated with repeatedly serializing and transferring Python objects between processes.
+### 3. Cython Matching Engine
 
-The implementation uses binary records and shared-memory access to support high-volume order delivery.
+The order book is implemented using Cython to improve performance in order-processing operations.
 
-#3. Cython Order Book
+It supports buy and sell orders and performs matching based on price-time priority.
 
-The order book processes incoming orders and matches compatible buy and sell orders.
+The matching process considers:
 
-The matching engine is implemented in Cython to reduce Python-level overhead in performance-sensitive operations.
+- Best available bid and ask prices.
+- Order quantities.
+- Order-side information.
+- Matching and fill generation.
 
-The project explores price-time priority, where better-priced orders take precedence and orders at the same price are handled according to arrival order.
+Cython is used to reduce Python-level overhead in performance-sensitive operations.
 
-#4. Trade Buffer and SQLite
+### 4. Trade Buffer and SQLite Writer
 
-The trade buffer provides storage for generated trade records. The project also includes SQLite-based trade-writing support.
+The trade buffer stores generated trade records using memory-mapped storage.
 
-Trade buffering and successful persistence to SQLite are separate concerns; the database record count should be verified independently when validating persistence.
+The project also includes an SQLite writer for trade persistence.
 
-#5. Dashboard
+This separates trade generation, buffering, and database-writing responsibilities.
 
-The browser-based dashboard presents market information and engine metrics, including:
+### 5. Web-Based Market Dashboard
 
-Bid and ask market depth
+The Flask-based dashboard provides a visual representation of market activity.
 
-Best bid and best ask
+Dashboard features include:
 
-Bid-ask spread
+- Bid and ask order-book depth.
+- Best bid and best ask prices.
+- Bid-ask spread.
+- Market information.
+- Latency and throughput metrics, where available.
+- Market status and alert indicators.
 
-Order-book information
-
-Latency and throughput metrics where supplied by the running engine
-
-Market status and alert indicators
-
-The dashboard is intended to make the matching engine's activity easier to inspect during demonstrations.
+HTML and CSS are used to build the dashboard interface.
 
 ## Repository Structure
 
 ```text
 ChronosMatch/
+│
 ├── src/
 │   ├── dashboard.py
 │   ├── firehose_to_ring.py
 │   ├── firehose_to_ring_concurrent.py
 │   ├── order_book.pyx
 │   ├── order_book.cpp
-│   ├── order_book.cp312-win_amd64.pyd
 │   ├── order_generator.py
 │   ├── ring_to_orderbook.py
 │   ├── ringBuffer.py
@@ -157,6 +159,7 @@ ChronosMatch/
 │   ├── test_ring_reader.py
 │   ├── trade_buffer.py
 │   └── trade_writer.py
+│
 ├── test/
 │   ├── cpu_timing.py
 │   ├── gen.py
@@ -167,12 +170,16 @@ ChronosMatch/
 │   ├── pickle_producer.py
 │   ├── ringBuffer.py
 │   ├── run_proof.py
-│   ├── verify_integrity.py
-│   └── proof_results.json
+│   └── verify_integrity.py
+│
+├── tests/
+│
 ├── static/
-|    |___ style1.css
+│   └── style1.css
+│
 ├── templates/
-|    |___ dashboard.html
+│   └── dashboard.html
+│
 ├── app1.py
 ├── setup_test.py
 ├── test_engine_verification.py
@@ -185,96 +192,228 @@ ChronosMatch/
 └── README.md
 ```
 
-##Installation and Setup
+Generated files, compiled extensions, and runtime data files may be created during execution and are not source-code dependencies.
 
-##Prerequisites
+## Installation and Setup
 
-Windows 10 or Windows 11
+### Prerequisites
 
-Python 3.12
+- Windows 10 or Windows 11.
+- Python 3.12.
+- Git.
+- Visual Studio Build Tools with the **Desktop development with C++** workload.
+- Cython and the dependencies required by the project.
 
-Git
+### 1. Clone the repository
 
-Visual Studio Build Tools with the Desktop development with C++ workload for compiling Cython extensions
-
-#1. Clone the repository
-
+```powershell
 git clone https://github.com/DivyaL-1/ChronosMatch.git
 cd ChronosMatch
+```
 
-If the repository is already cloned, open its folder instead of cloning it again.
+### 2. Create a virtual environment
 
-#2. Create a virtual environment
-
+```powershell
 python -m venv .venv
+```
 
-Activate it in PowerShell:
+### 3. Activate the virtual environment
 
+```powershell
 .\.venv\Scripts\Activate.ps1
+```
 
-#3. Install dependencies
+### 4. Install dependencies
 
-If the repository contains requirements.txt, run:
+If a `requirements.txt` file is available in the repository:
 
-python -m pip install --upgrade pip
+```powershell
 pip install -r requirements.txt
+```
 
-Install any additional project-specific dependencies listed in the relevant scripts or build configuration.
+Otherwise, install the dependencies specified by the project's setup configuration.
 
-#4. Compile the Cython extension
+### 5. Build the Cython extension
 
-The Cython extension must be built before running scripts that import the compiled order-book module.
+Run the project's build configuration from the appropriate directory.
 
-Use the project's existing build configuration, such as setup.py or pyproject.toml, if available. For a compatible setup.py configuration, the command is typically:
+For a project using `setup.py`, the typical command is:
 
+```powershell
 python setup.py build_ext --inplace
+```
 
-Run the build from the directory containing the build configuration. If your repository uses a different build system, follow that configuration instead.
+The compiled extension must be available before running scripts that import the Cython order book.
 
-##Running the Project
+## Running the Project
 
-Run commands from the repository root unless otherwise indicated.
+Run commands from the project root unless otherwise specified.
 
-#Run the browser dashboard
+### Start the Web Dashboard
 
+```powershell
 python app.py
+```
 
-Open the local URL printed by Flask in your browser. The default Flask address is commonly http://127.0.0.1:5000, unless the application is configured differently.
+Open the local URL displayed in the terminal to view the dashboard.
 
-#Run the order generator
+### Run the Order Generator
 
+```powershell
 python src/order_generator.py
+```
 
-This runs the generator's configured default workload. Check the script if you need to change the order count or benchmark settings.
+### Run the Firehose-to-Ring-Buffer Workflow
 
-#Run the producer and ring-buffer workflow
-
+```powershell
 python src/firehose_to_ring.py
+```
 
-This script uses the configuration defined in the source file. Ensure the consumer is started as required by the particular workflow before running a producer-only script.
+### Run the Matching-Engine Audit
 
-#Run the matching-engine audit
-
+```powershell
 python src/run_engine_audit.py
+```
 
-This runs the audit with the count and configuration currently defined in the script.
+### Run the Live Demonstration
 
-#Run the live demonstration
-
+```powershell
 python src/run_live_demo.py
+```
 
-Use the workflow's expected startup order and configuration so the producer and consumer coordinate correctly.
+### Run the One-Million-Order IPC Proof Test
 
-#Run the one-million-order IPC proof test
-
+```powershell
 python test/run_proof.py
+```
 
-The default test sends 1,000,000 orders through each of two IPC implementations:
+The proof test compares two IPC implementations:
 
-Memory-mapped shared memory (mmap)
+1. Memory-mapped shared memory (mmap).
+2. Pickle-based IPC using `multiprocessing.connection`.
 
-Pickle-based IPC using multiprocessing.connection
+The default workload is 1,000,000 orders for each method.
 
-The test compares elapsed wall-clock time, combined CPU time, throughput, and reported lost orders. It writes its results to test/proof_results.json.
+The test generates a `proof_results.json` file containing benchmark results.
 
-The IPC proof test is separate from the Cython matching-engine audit.
+## Performance Benchmarks
+
+The following results were obtained during actual project test runs.
+
+Performance may vary depending on hardware, system load, Python version, and execution conditions.
+
+### 1. Matching-Engine Audit – 100,000 Orders
+
+| Metric | Result |
+|---|---:|
+| Expected Orders | 100,000 |
+| Orders Processed | 100,000 |
+| Reported Lost Orders | 0 |
+| Orders With Fills | 42,734 |
+| Total Fills | 77,959 |
+| Trades Buffered | 77,959 |
+| Elapsed Time | 1.7148 seconds |
+| Throughput | 58,315 orders/second |
+| Average Latency | 1,943 ns |
+| P95 Latency | 3,500 ns |
+| P99 Latency | 7,400 ns |
+| Maximum Latency | 1,625,600 ns |
+
+**Latency measurement:** These latency values measure the duration of an individual `book.add_limit_order()` call. They do not represent end-to-end latency across order generation, IPC, matching, and persistence.
+
+The maximum recorded matching-call latency was approximately 1.626 milliseconds.
+
+### 2. Concurrent IPC Audit – 100,000 Orders
+
+| Metric | Result |
+|---|---:|
+| Expected Orders | 100,000 |
+| Orders Processed | 100,000 |
+| Reported Lost Orders | 0 |
+| Total Fills | 77,959 |
+| Elapsed Time | 2.1867 seconds |
+| Throughput | 45,732 orders/second |
+
+This is a separate concurrent IPC benchmark and should not be confused with the matching-engine audit.
+
+### 3. One-Million-Order IPC Benchmark
+
+The IPC proof test compares memory-mapped shared memory with pickle-based communication using separate producer and consumer processes.
+
+**Test workload: 1,000,000 orders per method.**
+
+| Metric | mmap (Shared Memory) | Pickle-Based IPC |
+|---|---:|---:|
+| Orders Sent | 1,000,000 | 1,000,000 |
+| Wall-Clock Time | 5.453 seconds | 18.268 seconds |
+| Combined CPU Time | 6.031 seconds | 27.219 seconds |
+| Throughput | 183,372 orders/sec | 54,740 orders/sec |
+| Reported Lost Orders | 0 | 0 |
+
+**Benchmark observations:**
+
+- mmap achieved approximately 3.3 times faster wall-clock performance.
+- mmap used approximately 4.5 times less combined CPU time.
+- Both consumers reported receiving all 1,000,000 orders.
+- Both methods reported zero lost orders.
+
+These results demonstrate the performance of the tested IPC implementations. They do not represent one million orders processed by the Cython matching engine.
+
+### Benchmark Interpretation
+
+The project includes different benchmarks for different stages of the system:
+
+| Benchmark | What It Measures |
+|---|---|
+| Order Generator | Synthetic order-generation performance |
+| Matching-Engine Audit | Order-book processing and matching-call latency |
+| Concurrent IPC Audit | Producer-consumer processing performance |
+| One-Million-Order IPC Proof | mmap versus pickle-based IPC performance |
+
+The results should be interpreted separately because the workloads and measurement methods differ.
+
+## Testing and Verification
+
+The project includes scripts for checking IPC delivery, data integrity, and order-book matching.
+
+Important verification points include:
+
+1. Confirm that the expected order count matches the consumer's processed count.
+2. Verify that the reported lost-order count is zero.
+3. Check producer and consumer process exit codes.
+4. Test buy and sell order matching.
+5. Compare generated fills with trade-buffer records.
+6. Verify SQLite persistence independently when required.
+7. Record benchmark results for reproducibility.
+
+The one-million-order IPC proof test completed successfully in the recorded run.
+
+
+## Learning Outcomes
+
+Through ChronosMatch, the project explores practical concepts in systems programming and performance engineering:
+
+- Asynchronous programming with Python.
+- Inter-process communication.
+- Memory-mapped files and ring buffers.
+- Binary data representation.
+- Cython optimization.
+- Order matching and price-time priority.
+- Latency and throughput benchmarking.
+- Producer-consumer process coordination.
+- Data-integrity verification.
+- Dashboard development and system monitoring.
+
+## Author
+
+**Divya L.**
+
+GitHub: [DivyaL-1](https://github.com/DivyaL-1)
+
+Project Repository: [ChronosMatch](https://github.com/DivyaL-1/ChronosMatch)
+
+## Disclaimer
+
+ChronosMatch is an educational and experimental software project developed to explore order matching, IPC, and performance optimization.
+
+It is not intended for live financial trading or production brokerage use. Benchmark results represent specific development runs and are not guarantees of performance on other hardware or workloads.
