@@ -404,13 +404,14 @@ Through ChronosMatch, the project explores practical concepts in systems program
 - Data-integrity verification.
 - Dashboard development and system monitoring.
 
-## Author
+## Team Members
 
 **Divya L.**
+**Jayendra Kondekar.**
+**Pallavi U S.**                                                                                          
 
-GitHub: [DivyaL-1](https://github.com/DivyaL-1)
 
-Project Repository: [ChronosMatch](https://github.com/DivyaL-1/ChronosMatch)
+Project Repository: [ChronosMatch](https://github.com/pallavius/ChronosMatch)
 
 ## Disclaimer
 
